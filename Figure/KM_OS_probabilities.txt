@@ -1,0 +1,33 @@
+Survival probabilities
+========================================
+
+Time (months)	Survival Probability
+ADJUST study
+12	1.0000
+24	0.8333
+36	0.7738
+48	0.7738
+IMPACT study
+12	1.0000
+24	0.9412
+36	0.8824
+48	0.8824
+
+Kaplan-Meier 生存解析結果
+========================================
+
+生存中央値 (Median Survival Time):
+  - ADJUST群 0: inf ヶ月
+  - IMPACT群 1: inf ヶ月
+
+95% 信頼区間 (Confidence Interval):
+  - ADJUST群 0: 0.50 - 1.00 ヶ月
+  - IMPACT群 1: 0.43 - 1.00 ヶ月
+
+ログランク検定 (Log-rank test):
+  - P値: 0.3690
+
+ハザード比 (Hazard Ratio, HR):
+  - HR: 1.25
+  - 95% CI: 0.34 - 4.66
+
