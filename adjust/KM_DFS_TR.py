@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from lifelines import KaplanMeierFitter
+from lifelines import KaplanMeierFitter, CoxPHFitter
 from lifelines.statistics import logrank_test
 
 # ✅ Google Colab の場合、適切なディレクトリを指定
@@ -19,11 +19,11 @@ columns_needed = ["DFSMONTHS", "DFS_event", "Lymphoid Compartment", "JAK-STAT si
 df_selected = df[columns_needed].dropna()
 
 # カテゴリごとのグループ名のマッピング
-group_labels = {
-    "Lymphoid Compartment": {0: "High group", 1: "Low group"},
-    "JAK-STAT signaling": {0: "Low group", 1: "High group"},
-    "hypoxia": {0: "Low group", 1: "High group"}
-}
+# group_labels = {
+#     "Lymphoid Compartment": {0: "High group", 1: "Low group"},
+#     "JAK-STAT signaling": {0: "Low group", 1: "High group"},
+#     "hypoxia": {0: "Low group", 1: "High group"}
+# }
 
 def plot_km_by_category(ax, category_name, colors=["#CE1C48", "#1180D9"], ci_show=True, ci_alpha=0.1, invert_order=False):
     """
@@ -50,7 +50,8 @@ def plot_km_by_category(ax, category_name, colors=["#CE1C48", "#1180D9"], ci_sho
         df_group = df_selected[df_selected[category_name] == group].copy()
 
         # グループ名を取得
-        label_name = group_labels[category_name].get(group, f"{category_name} {group}")
+        # label_name = group_labels[category_name].get(group, f"{category_name} {group}")
+        label_name = "Low group" if group == 0 else "High group"
 
         # Kaplan-Meierフィッティング
         kmf.fit(df_group["DFSMONTHS"], event_observed=df_group["DFS_event"], label=label_name)
@@ -86,7 +87,7 @@ def plot_km_by_category(ax, category_name, colors=["#CE1C48", "#1180D9"], ci_sho
     # Number at Risk のラベル
     ax.text(-2, -0.15, "Number at Risk", fontsize=12, ha="right", color="black")
     for i, group in enumerate(unique_groups):
-        ax.text(-2, -0.20 - (i * 0.05), group_labels[category_name][group], fontsize=12, ha="right", color=colors[i])
+        ax.text(-2, -0.20 - (i * 0.05), "Low group" if group == 0 else "High group", fontsize=12, ha="right", color=colors[i])
 
 # ✅ KMプロットの作成・保存
 fig, axes = plt.subplots(1, 3, figsize=(24, 6))
@@ -292,18 +293,27 @@ with open(output_path_txt, "w") as f:
 
         p_value = logrank_result.p_value
 
-        # ✅ ハザード比 (HR) の計算
-        hr = group_event_counts[unique_groups[1]] / group_event_counts[unique_groups[0]]
+        # ✅ Cox比例ハザードモデルでHRを正確に推定
+        df_cox = df_selected[[category_name, "DFSMONTHS", "DFS_event"]].copy()
+        df_cox["group_binary"] = df_cox[category_name].map({
+            unique_groups[0]: 0,
+            unique_groups[1]: 1
+        })
 
-        # 95%信頼区間の計算（カプランマイヤー推定法による近似）
-        ci_lower = np.exp(np.log(hr) - 1.96 * np.sqrt(1 / group_event_counts[unique_groups[1]] + 1 / group_event_counts[unique_groups[0]]))
-        ci_upper = np.exp(np.log(hr) + 1.96 * np.sqrt(1 / group_event_counts[unique_groups[1]] + 1 / group_event_counts[unique_groups[0]]))
+        cph = CoxPHFitter()
+        cph.fit(df_cox[["DFSMONTHS", "DFS_event", "group_binary"]],
+                duration_col="DFSMONTHS",
+                event_col="DFS_event")
+
+        hr = cph.hazard_ratios_["group_binary"]
+        ci_lower = np.exp(cph.summary.loc["group_binary", "coef lower 95%"])
+        ci_upper = np.exp(cph.summary.loc["group_binary", "coef upper 95%"])
 
         # ✅ ログランク検定結果を記載
         f.write("Statistical Analysis:\n")
         f.write(f"  Log-rank test P-value: {p_value:.4f}\n")
-        f.write(f"  Hazard Ratio (HR): {hr:.2f}\n")
-        f.write(f"  95% CI: {ci_lower:.2f} - {ci_upper:.2f}\n")
+        f.write(f"  Hazard Ratio (HR): {hr:.4f}\n")
+        f.write(f"  95% CI: {ci_lower:.4f} - {ci_upper:.4f}\n")
         f.write("=" * 50 + "\n\n")
         
     ###PD-L1###
@@ -346,18 +356,19 @@ with open(output_path_txt, "w") as f:
     )
     p_value_pdl1_np = logrank_result_pdl1_np.p_value
 
-    hr_pdl1_np = df_dfs_pdl1_p["DFS_event"].sum() / df_dfs_pdl1_n["DFS_event"].sum()
-    ci_lower_pdl1_np = np.exp(np.log(hr_pdl1_np) - 1.96 * np.sqrt(
-        1 / df_dfs_pdl1_p["DFS_event"].sum() + 1 / df_dfs_pdl1_n["DFS_event"].sum()))
-    ci_upper_pdl1_np = np.exp(np.log(hr_pdl1_np) + 1.96 * np.sqrt(
-        1 / df_dfs_pdl1_p["DFS_event"].sum() + 1 / df_dfs_pdl1_n["DFS_event"].sum()))
+    cph_pdl1 = CoxPHFitter()
+    df_pdl1["PD-L1_np_binary"] = df_pdl1["PD-L1_np"].map({"negative": 0, "positive": 1})
+    cph_pdl1.fit(df_pdl1[["DFSMONTHS", "DFS_event", "PD-L1_np_binary"]],
+                         duration_col="DFSMONTHS",
+                         event_col="DFS_event")
+    ci_lower = np.exp(cph_pdl1.confidence_intervals_.iloc[0, 0])
+    ci_upper = np.exp(cph_pdl1.confidence_intervals_.iloc[0, 1])
 
     f.write("Statistical Analysis (PD-L1 negative vs positive):\n")
     f.write(f"  Log-rank test P-value: {p_value_pdl1_np:.4f}\n")
-    f.write(f"  Hazard Ratio (HR): {hr_pdl1_np:.2f}\n")
-    f.write(f"  95% CI: {ci_lower_pdl1_np:.2f} - {ci_upper_pdl1_np:.2f}\n")
+    f.write(f"  Hazard Ratio (HR): {cph_pdl1.hazard_ratios_["PD-L1_np_binary"]:.4f}\n")
+    f.write(f"  95% CI: {ci_lower:.4f} - {ci_upper:.4f}\n")
     f.write("=" * 50 + "\n\n")
-
 
 
 print(f"✅ Kaplan-Meier 曲線を保存しました: {output_path}")

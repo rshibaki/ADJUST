@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from lifelines import KaplanMeierFitter
+from lifelines import KaplanMeierFitter, CoxPHFitter
 from lifelines.statistics import logrank_test
 from lifelines.utils import median_survival_times
 
@@ -94,14 +94,6 @@ km_os_0.plot_survival_function(ax=ax, ci_show=True, ci_alpha=0.1, linewidth=2, c
 # STUDY == 1 生存曲線と95%信頼区間をプロット
 km_os_1.plot_survival_function(ax=ax, ci_show=True, ci_alpha=0.1, linewidth=2, color="#1180D9", label="Matched CDDP+VNR")
 
-# # STUDY == 0 の生存曲線（青）
-# ax.step(np.insert(km_os_0.timeline, 0, 0), np.insert(km_os_0.survival_function_.values.flatten(), 0, 1.0), 
-#         where="post", label="ADJUST", linewidth=2, color="blue")
-
-# # STUDY == 1 の生存曲線（赤）
-# ax.step(np.insert(km_os_1.timeline, 0, 0), np.insert(km_os_1.survival_function_.values.flatten(), 0, 1.0), 
-#         where="post", label="IMPACT", linewidth=2, color="red")
-
 # センサリングデータのプロット
 censor_times_0 = df_os_integ_0["OSMONTHS"][df_os_integ_0["OS_event"] == 0]
 censor_probs_0 = km_os_0.survival_function_at_times(censor_times_0).values
@@ -184,12 +176,19 @@ logrank_result = logrank_test(
 # P値を取得
 p_value = logrank_result.p_value
 
-# ハザード比 (HR) の計算
-hr = km_os_1.event_table.observed.sum() / km_os_0.event_table.observed.sum()
+df_cox = pd.concat([
+    df_os_integ_0.assign(group=0),
+    df_os_integ_1.assign(group=1)
+])
 
-# 95%信頼区間の計算（カプランマイヤー推定法による近似）
-ci_lower = np.exp(np.log(hr) - 1.96 * np.sqrt(1/km_os_1.event_table.observed.sum() + 1/km_os_0.event_table.observed.sum()))
-ci_upper = np.exp(np.log(hr) + 1.96 * np.sqrt(1/km_os_1.event_table.observed.sum() + 1/km_os_0.event_table.observed.sum()))
+cph = CoxPHFitter()
+cph.fit(df_cox[["OSMONTHS", "OS_event", "group"]],
+        duration_col="OSMONTHS",
+        event_col="OS_event")
+
+hr = cph.hazard_ratios_["group"]
+ci_lower = np.exp(cph.summary.loc["group", "coef lower 95%"])
+ci_upper = np.exp(cph.summary.loc["group", "coef upper 95%"])
 
 # ✅ 保存フォルダとファイル名を指定
 output_filename_txt = "KM_OS_probabilities.txt"

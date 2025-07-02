@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from lifelines import KaplanMeierFitter
+from lifelines import KaplanMeierFitter, CoxPHFitter
 from lifelines.statistics import logrank_test
 from lifelines.utils import median_survival_times
 
@@ -26,10 +26,6 @@ plt.subplots_adjust(bottom=0.35)
 
 # 生存曲線と95%信頼区間をプロット
 km_dfs_main.plot_survival_function(ax=ax, ci_show=True, linewidth=2, color="blue", legend=False)
-
-# # 📌 0 から始まるように手動で (0, 1.0) を追加 + 濃い水色のラインを設定
-# ax.step(np.insert(km_dfs_main.timeline, 0, 0), np.insert(km_dfs_main.survival_function_.values.flatten(), 0, 1.0), 
-#     where="post", label="Kaplan-Meier Estimate", linewidth=2, color="blue")
 
 # 🔴 センサリング（打ち切りデータ）のプロット（濃い水色）
 censor_times = df_dfs_main["DFSMONTHS"][df_dfs_main["DFS_event"] == 0]
@@ -186,12 +182,19 @@ logrank_result = logrank_test(
 # P値を取得
 p_value = logrank_result.p_value
 
-# ハザード比 (HR) の計算
-hr = km_dfs_1.event_table.observed.sum() / km_dfs_0.event_table.observed.sum()
+df_cox = pd.concat([
+    df_dfs_integ_0.assign(group=0),
+    df_dfs_integ_1.assign(group=1)
+])
 
-# 95%信頼区間の計算（カプランマイヤー推定法による近似）
-ci_lower = np.exp(np.log(hr) - 1.96 * np.sqrt(1/km_dfs_1.event_table.observed.sum() + 1/km_dfs_0.event_table.observed.sum()))
-ci_upper = np.exp(np.log(hr) + 1.96 * np.sqrt(1/km_dfs_1.event_table.observed.sum() + 1/km_dfs_0.event_table.observed.sum()))
+cph = CoxPHFitter()
+cph.fit(df_cox[["DFSMONTHS", "DFS_event", "group"]],
+        duration_col="DFSMONTHS",
+        event_col="DFS_event")
+
+hr = cph.hazard_ratios_["group"]
+ci_lower = np.exp(cph.summary.loc["group", "coef lower 95%"])
+ci_upper = np.exp(cph.summary.loc["group", "coef upper 95%"])
 
 # 80%信頼区間を計算
 km_dfs_0_80 = KaplanMeierFitter(alpha=0.20)
@@ -267,7 +270,7 @@ with open(output_path_txt, "w") as f:
 
     # ✅ ハザード比 (HR) と 95% 信頼区間の書き込み
     f.write(f"ハザード比 (Hazard Ratio, HR):\n")
-    f.write(f"  - HR: {hr:.2f}\n")
-    f.write(f"  - 95% CI: {ci_lower:.2f} - {ci_upper:.2f}\n\n")
+    f.write(f"  - HR: {hr:.4f}\n")
+    f.write(f"  - 95% CI: {ci_lower:.4f} - {ci_upper:.4f}\n\n")
 
 print(f"✅ txtデータを保存しました: {output_path_txt}")
