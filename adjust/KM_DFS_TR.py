@@ -25,7 +25,7 @@ df_selected = df[columns_needed].dropna()
 #     "hypoxia": {0: "Low group", 1: "High group"}
 # }
 
-def plot_km_by_category(ax, category_name, colors=["#CE1C48", "#1180D9"], ci_show=True, ci_alpha=0.1, invert_order=False):
+def plot_km_by_category(ax, category_name, colors=["#1180D9", "#CE1C48"], ci_show=True, ci_alpha=0.1, invert_order=False):
     """
     指定したカテゴリでKaplan-Meier生存曲線をプロットする関数。
 
@@ -91,7 +91,7 @@ def plot_km_by_category(ax, category_name, colors=["#CE1C48", "#1180D9"], ci_sho
 
 # ✅ KMプロットの作成・保存
 fig, axes = plt.subplots(1, 3, figsize=(24, 6))
-plot_km_by_category(axes[0], "Lymphoid Compartment", colors=["#1180D9", "#CE1C48"])
+plot_km_by_category(axes[0], "Lymphoid Compartment")
 plot_km_by_category(axes[1], "JAK-STAT signaling")
 plot_km_by_category(axes[2], "hypoxia")
 plt.tight_layout()
@@ -265,7 +265,7 @@ with open(output_path_txt, "w") as f:
 
         for group in unique_groups:
             df_group = df_selected[df_selected[category_name] == group].copy()
-            label_name = group_labels[category_name].get(group, f"{category_name} {group}")
+            label_name = "Low group" if group == 0 else "High group"
 
             kmf.fit(df_group["DFSMONTHS"], event_observed=df_group["DFS_event"])
             survival_probs = kmf.survival_function_at_times(time_points)
