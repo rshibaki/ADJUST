@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from lifelines import KaplanMeierFitter, CoxPHFitter
 from lifelines.statistics import logrank_test
+from lifelines.utils import median_survival_times
 
 # ✅ Google Colab の場合、適切なディレクトリを指定
 output_dir = "/Users/rshibaki/Documents/project/ADJUST/Figure"  # 必要に応じて変更してください
@@ -120,6 +121,15 @@ km_dfs_pdl1_2 = KaplanMeierFitter()
 km_dfs_pdl1_0.fit(df_dfs_pdl1_0["DFSMONTHS"], event_observed=df_dfs_pdl1_0["DFS_event"])
 km_dfs_pdl1_1.fit(df_dfs_pdl1_1["DFSMONTHS"], event_observed=df_dfs_pdl1_1["DFS_event"])
 km_dfs_pdl1_2.fit(df_dfs_pdl1_2["DFSMONTHS"], event_observed=df_dfs_pdl1_2["DFS_event"])
+
+# DFS中央値とその95%CIを算出
+median_pdl1_0 = km_dfs_pdl1_0.median_survival_time_
+median_pdl1_1 = km_dfs_pdl1_1.median_survival_time_
+median_pdl1_2 = km_dfs_pdl1_2.median_survival_time_
+
+median_ci_pdl1_0 = median_survival_times(km_dfs_pdl1_0.confidence_interval_)
+median_ci_pdl1_1 = median_survival_times(km_dfs_pdl1_1.confidence_interval_)
+median_ci_pdl1_2 = median_survival_times(km_dfs_pdl1_2.confidence_interval_)
 
 plt.rcParams["font.family"] = "Arial"
 fig, ax = plt.subplots(figsize=(8, 6))
@@ -335,7 +345,16 @@ with open(output_path_txt, "w") as f:
         for t, prob in zip(time_points, survival_probs.values.flatten()):
             f.write(f"  {t} months: {prob:.4f}\n")
         f.write("\n")
-
+    f.write("-" * 50 + "\n\n")
+    f.write(f"生存中央値 (Median Survival Time):\n")
+    f.write(f"  - <1%群 0: {median_pdl1_0:.2f} ヶ月\n")
+    f.write(f"  - 1–49%群 1: {median_pdl1_1:.2f} ヶ月\n")
+    f.write(f"  - >=50%群 2: {median_pdl1_2:.2f} ヶ月\n\n")
+    f.write("95% 信頼区間 (Confidence Interval):\n")
+    f.write(f"  - <1%群 0: {median_ci_pdl1_0.iloc[0, 0]:.2f} - {median_ci_pdl1_0.iloc[0, 1]:.2f} ヶ月\n")
+    f.write(f"  - 1-49%群 0: {median_ci_pdl1_1.iloc[0, 0]:.2f} - {median_ci_pdl1_1.iloc[0, 1]:.2f} ヶ月\n")
+    f.write(f"  - >=50%群 0: {median_ci_pdl1_2.iloc[0, 0]:.2f} - {median_ci_pdl1_2.iloc[0, 1]:.2f} ヶ月\n\n")
+    
     ### PD-L1_np (nega vs posi) 年次生存割合 + ログランク・HR
     f.write("Survival Probabilities (PD-L1 negative vs positive):\n")
     f.write("-" * 50 + "\n")

@@ -27,8 +27,8 @@ Kaplan-Meier 生存解析結果
   - IMPACT群 1: 17.74 ヶ月
 
 95% 信頼区間 (Confidence Interval):
-  - ADJUST群 0: 0.09 - 1.00 ヶ月
-  - IMPACT群 1: 0.14 - 1.00 ヶ月
+  - ADJUST群 0: 12.4846 - inf ヶ月
+  - IMPACT群 1: 11.0492 - inf ヶ月
 
 ログランク検定 (Log-rank test):
   - P値: 0.9465

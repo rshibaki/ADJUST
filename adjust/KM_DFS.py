@@ -169,9 +169,8 @@ survival_probabilities1 = km_dfs_1.survival_function_at_times(time_points)
 median_survival_0 = km_dfs_0.median_survival_time_
 median_survival_1 = km_dfs_1.median_survival_time_
 
-# 95%信頼区間の計算
-ci_0 = km_dfs_0.confidence_interval_survival_function_
-ci_1 = km_dfs_1.confidence_interval_survival_function_
+ci_0 = median_survival_times(km_dfs_0.confidence_interval_)
+ci_1 = median_survival_times(km_dfs_1.confidence_interval_)
 
 # ログランク検定の実施
 logrank_result = logrank_test(
@@ -261,8 +260,8 @@ with open(output_path_txt, "w") as f:
 
     # ✅ 95% 信頼区間の書き込み
     f.write("95% 信頼区間 (Confidence Interval):\n")
-    f.write(f"  - ADJUST群 0: {ci_0.iloc[:, 0].min():.2f} - {ci_0.iloc[:, 0].max():.2f} ヶ月\n")
-    f.write(f"  - IMPACT群 1: {ci_1.iloc[:, 0].min():.2f} - {ci_1.iloc[:, 0].max():.2f} ヶ月\n\n")
+    f.write(f"  - ADJUST群 0: {ci_0.iloc[0, 0]:.4f} - {ci_0.iloc[0, 1]:.2f} ヶ月\n")
+    f.write(f"  - IMPACT群 1: {ci_1.iloc[0, 0]:.4f} - {ci_1.iloc[0, 1].max():.2f} ヶ月\n\n")
 
     # ✅ ログランク検定のP値の書き込み
     f.write(f"ログランク検定 (Log-rank test):\n")

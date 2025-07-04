@@ -26,9 +26,6 @@ plt.subplots_adjust(bottom=0.35)
 # 生存曲線と95%信頼区間をプロット
 km_os_main.plot_survival_function(ax=ax, ci_show=True, linewidth=2, color="blue", legend=False)
 
-# ax.step(np.insert(km_os_main.timeline, 0, 0), np.insert(km_os_main.survival_function_.values.flatten(), 0, 1.0), 
-#     where="post", label="Kaplan-Meier Estimate", linewidth=2, color="blue")
-
 censor_times = df_os_main["OSMONTHS"][df_os_main["OS_event"] == 0]
 censor_probs = km_os_main.survival_function_at_times(censor_times).values
 

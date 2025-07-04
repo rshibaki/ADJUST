@@ -96,6 +96,18 @@ Survival Probabilities (PD-L1 3-group):
   36 months: 0.2500
   48 months: 0.2500
 
+--------------------------------------------------
+
+生存中央値 (Median Survival Time):
+  - <1%群 0: 30.06 ヶ月
+  - 1–49%群 1: 23.66 ヶ月
+  - >=50%群 2: 18.50 ヶ月
+
+95% 信頼区間 (Confidence Interval):
+  - <1%群 0: 6.01 - inf ヶ月
+  - 1-49%群 0: 12.48 - inf ヶ月
+  - >=50%群 0: 14.78 - inf ヶ月
+
 Survival Probabilities (PD-L1 negative vs positive):
 --------------------------------------------------
 Negative:
