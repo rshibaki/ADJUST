@@ -137,7 +137,7 @@ plt.subplots_adjust(bottom=0.4)
 
 km_dfs_pdl1_0.plot(ax=ax, ci_show=True, ci_alpha=0.1, linewidth=2, color="#1180D9", label="<1%")
 km_dfs_pdl1_1.plot(ax=ax, ci_show=True, ci_alpha=0.1, linewidth=2, color="#008080", label="1-49%")
-km_dfs_pdl1_2.plot(ax=ax, ci_show=True, ci_alpha=0.1, linewidth=2, color="#CE1C48", label=">50%")
+km_dfs_pdl1_2.plot(ax=ax, ci_show=True, ci_alpha=0.1, linewidth=2, color="#CE1C48", label="≥50%")
 
 cencor_time_0 = df_dfs_pdl1_0['DFSMONTHS'][df_dfs_pdl1_0['DFS_event'] == 0]
 cencor_probs_0 = km_dfs_pdl1_0.survival_function_at_times(cencor_time_0).values
@@ -182,7 +182,7 @@ for i, (t, r0, r1, r2) in enumerate(zip(risk_times, risk_counts_0, risk_counts_1
 ax.text(-2, -0.30, "Number at risk", fontsize=12, ha="right", color="black")
 ax.text(-2, -0.35, "<1%", fontsize=12, ha="right", color="#1180D9")
 ax.text(-2, -0.40, "1-49%", fontsize=12, ha="right", color="#008080")
-ax.text(-2, -0.45, ">50%", fontsize=12, ha="right", color="#CE1C48")
+ax.text(-2, -0.45, "≥50%", fontsize=12, ha="right", color="#CE1C48")
 
 ax.legend(fontsize=10)
 
