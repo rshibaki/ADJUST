@@ -108,6 +108,36 @@ Survival Probabilities (PD-L1 3-group):
   - 1-49%群 0: 12.48 - inf ヶ月
   - >=50%群 0: 14.78 - inf ヶ月
 
+Event and Censoring Times with KM Probabilities (PD-L1 3-group):
+--------------------------------------------------
+<1% group:
+  Events (5):
+    6.0 months: KM probability = 0.8750
+    7.8 months: KM probability = 0.7500
+    8.4 months: KM probability = 0.6250
+    17.8 months: KM probability = 0.5000
+    30.1 months: KM probability = 0.3333
+  Censored (3):
+    27.3 months: KM probability = 0.5000
+    41.7 months: KM probability = 0.3333
+    43.6 months: KM probability = 0.3333
+
+1-49% group:
+  Events (2):
+    12.5 months: KM probability = 0.7500
+    23.7 months: KM probability = 0.5000
+  Censored (2):
+    31.0 months: KM probability = 0.5000
+    34.6 months: KM probability = 0.5000
+
+≥50% group:
+  Events (3):
+    14.8 months: KM probability = 0.7500
+    18.5 months: KM probability = 0.5000
+    35.1 months: KM probability = 0.2500
+  Censored (1):
+    41.0 months: KM probability = 0.2500
+
 Survival Probabilities (PD-L1 negative vs positive):
 --------------------------------------------------
 Negative:

@@ -355,6 +355,31 @@ with open(output_path_txt, "w") as f:
     f.write(f"  - 1-49%群 0: {median_ci_pdl1_1.iloc[0, 0]:.2f} - {median_ci_pdl1_1.iloc[0, 1]:.2f} ヶ月\n")
     f.write(f"  - >=50%群 0: {median_ci_pdl1_2.iloc[0, 0]:.2f} - {median_ci_pdl1_2.iloc[0, 1]:.2f} ヶ月\n\n")
     
+    ### PD-L1 (3群) のイベントおよび打ち切り発生時期と生存確率の記載 ###
+    f.write("Event and Censoring Times with KM Probabilities (PD-L1 3-group):\n")
+    f.write("-" * 50 + "\n")
+
+    for label, df_group, km in zip(["<1%", "1-49%", "≥50%"],
+                                    [df_dfs_pdl1_0, df_dfs_pdl1_1, df_dfs_pdl1_2],
+                                    [km_dfs_pdl1_0, km_dfs_pdl1_1, km_dfs_pdl1_2]):
+        f.write(f"{label} group:\n")
+
+        # Event times
+        event_times = df_group[df_group["DFS_event"] == 1]["DFSMONTHS"].dropna().sort_values()
+        event_probs = km.survival_function_at_times(event_times).values.flatten()
+        f.write(f"  Events ({len(event_times)}):\n")
+        for t, p in zip(event_times, event_probs):
+            f.write(f"    {t:.1f} months: KM probability = {p:.4f}\n")
+
+        # Censoring times
+        censor_times = df_group[df_group["DFS_event"] == 0]["DFSMONTHS"].dropna().sort_values()
+        censor_probs = km.survival_function_at_times(censor_times).values.flatten()
+        f.write(f"  Censored ({len(censor_times)}):\n")
+        for t, p in zip(censor_times, censor_probs):
+            f.write(f"    {t:.1f} months: KM probability = {p:.4f}\n")
+
+        f.write("\n")
+    
     ### PD-L1_np (nega vs posi) 年次生存割合 + ログランク・HR
     f.write("Survival Probabilities (PD-L1 negative vs positive):\n")
     f.write("-" * 50 + "\n")
